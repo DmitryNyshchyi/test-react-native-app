@@ -1,4 +1,10 @@
-import { Pressable, StyleSheet, View, type ViewProps } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  type ViewProps,
+} from "react-native";
 import { PressableProps } from "react-native/Libraries/Components/Pressable/Pressable";
 
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -7,12 +13,14 @@ import { ThemedText } from "@/components/themed-text";
 type Props = ViewProps &
   PressableProps & {
     variant?: "primary" | "secondary" | "fab";
+    loading?: boolean;
   };
 
 export function Button({
   children,
   style,
   variant = "primary",
+  loading,
   ...props
 }: Props) {
   const buttonTheme = useThemeColor(
@@ -34,7 +42,9 @@ export function Button({
   return (
     <Pressable style={style} {...props}>
       <View style={buttonStyles}>
-        <ThemedText style={textStyles}>{children}</ThemedText>
+        <ThemedText style={textStyles}>
+          {loading ? <ActivityIndicator color="#000" /> : children}
+        </ThemedText>
       </View>
     </Pressable>
   );

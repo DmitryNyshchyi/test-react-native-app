@@ -6,12 +6,12 @@ import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Button } from "@/components/button";
-import { BooksGrid } from "@/components/books-grid";
 import { useBooks } from "@/hooks/use-books";
+import { BookList } from "@/components/book-list";
 
 export default function HomeScreen() {
   const { push } = useRouter();
-  const { books, deleteBook } = useBooks();
+  const { books, loading, error, loadBooks, deleteBook } = useBooks();
 
   return (
     <View style={{ flex: 1 }}>
@@ -28,25 +28,17 @@ export default function HomeScreen() {
           <ThemedText type="title">Your list of books read</ThemedText>
         </ThemedView>
 
-        {books?.length > 0 ? (
-          <BooksGrid books={books} onDelete={deleteBook} />
-        ) : (
-          <ThemedView style={styles.noContentContainer}>
-            <ThemedText type="default" style={{ textAlign: "center" }}>
-              You have no books read yet
-            </ThemedText>
-            <Button
-              style={{ width: "50%" }}
-              onPress={() => push("/(modals)/create-new-book-modal")}
-              variant="primary"
-            >
-              Create
-            </Button>
-          </ThemedView>
-        )}
+        <BookList
+          loading={loading}
+          error={error}
+          books={books}
+          onDelete={deleteBook}
+          onAdd={() => push("/(modals)/create-new-book-modal")}
+          onRetry={loadBooks}
+        />
       </ParallaxScrollView>
 
-      {books?.length > 0 && (
+      {!loading && books?.length > 0 && (
         <Button
           style={styles.fab}
           onPress={() => push("/(modals)/create-new-book-modal")}
@@ -65,14 +57,9 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 16,
   },
-  noContentContainer: {
-    gap: 12,
-    marginVertical: 32,
-    alignItems: "center",
-  },
   headerImage: {
-    height: "100%",
     width: "100%",
+    height: "100%",
   },
   fab: {
     position: "absolute",

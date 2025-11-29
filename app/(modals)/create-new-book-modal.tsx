@@ -11,7 +11,7 @@ import { useBooks } from "@/hooks/use-books";
 
 export default function ModalScreen() {
   const { back } = useRouter();
-  const { addBook } = useBooks();
+  const { addBook, isMutating } = useBooks();
   const [form, setForm] = useState<Omit<Book, "id">>({
     name: "",
     author: "",
@@ -62,11 +62,22 @@ export default function ModalScreen() {
       />
 
       <ThemedView style={styles.buttonsContainer}>
-        <Button style={{ flex: 1 }} onPress={back} variant="secondary">
+        <Button
+          style={{ flex: 1 }}
+          onPress={back}
+          variant="secondary"
+          disabled={isMutating}
+        >
           Cancel
         </Button>
 
-        <Button style={{ flex: 1 }} onPress={handleCreate} variant="primary">
+        <Button
+          style={{ flex: 1 }}
+          onPress={handleCreate}
+          variant="primary"
+          disabled={isMutating}
+          loading={isMutating}
+        >
           Create
         </Button>
       </ThemedView>

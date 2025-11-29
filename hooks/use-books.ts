@@ -8,25 +8,34 @@ import { db } from "@/firebaseConfig";
 
 export function useBooks() {
   const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const booksRef = ref(db, "books");
+
+  const loadBooks = useCallback(() => {
+    setLoading(true);
+    setError(null);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onValue(
       booksRef,
       (snapshot) => {
+        setLoading(true);
+
         const data = snapshot.val();
         const loadedBooks: Book[] = data
           ? Object.keys(data).map((key) => ({ id: key, ...data[key] }))
           : [];
 
         setBooks(loadedBooks);
+        setLoading(false);
+        setError(null);
       },
       (error) => {
-        console.error("Firebase Realtime Database error:", error);
-        Toast.show({
-          type: "error",
-          text1: "Error: Failed to load books from database.",
-        });
+        setError("Failed to load books from the database. Please try again."); // 3. Set error state
+        setLoading(false);
       },
     );
 
@@ -35,6 +44,8 @@ export function useBooks() {
 
   const getBookById = useCallback(
     async (id: string): Promise<Book | null> => {
+      setLoading(true);
+
       try {
         const snapshot = await get(child(booksRef, id));
 
@@ -43,13 +54,13 @@ export function useBooks() {
         }
 
         return null;
-      } catch (e) {
-        Toast.show({
-          type: "error",
-          text1: "Error: Failed to load book details.",
-        });
+      } catch (error) {
+        console.error("Firebase Realtime Database error:", error);
+        setError("Failed to load book details.");
 
         return null;
+      } finally {
+        setLoading(false);
       }
     },
     [booksRef],
@@ -66,6 +77,8 @@ export function useBooks() {
         return false;
       }
 
+      setIsMutating(true);
+
       try {
         const newBookRef = push(booksRef);
 
@@ -78,12 +91,11 @@ export function useBooks() {
         return true;
       } catch (e) {
         console.error("Firebase Realtime Database error:", e);
-        Toast.show({
-          type: "error",
-          text1: "Error: Failed to save the book.",
-        });
+        setError("Failed to save the book.");
 
         return false;
+      } finally {
+        setIsMutating(false);
       }
     },
     [booksRef],
@@ -92,6 +104,8 @@ export function useBooks() {
   const deleteBook = useCallback(
     (id: string, onSuccess?: () => void) => {
       const onDelete = async () => {
+        setIsMutating(true);
+
         try {
           await remove(child(booksRef, id));
           Toast.show({
@@ -101,10 +115,9 @@ export function useBooks() {
           onSuccess?.();
         } catch (e) {
           console.error("Firebase Realtime Database error:", e);
-          Toast.show({
-            type: "error",
-            text1: "Error: Failed to delete the book.",
-          });
+          setError("Failed to delete the book.");
+        } finally {
+          setIsMutating(false);
         }
       };
 
@@ -118,6 +131,8 @@ export function useBooks() {
 
   const updateBook = useCallback(
     async (bookId: string, updatedData: Partial<Omit<Book, "id">>) => {
+      setIsMutating(true);
+
       try {
         await set(child(booksRef, bookId), updatedData);
         Toast.show({
@@ -128,16 +143,23 @@ export function useBooks() {
         return true;
       } catch (e) {
         console.error("Firebase Realtime Database error:", e);
-        Toast.show({
-          type: "error",
-          text1: "Error: Failed to update the book.",
-        });
-
-        return false;
+        setError("ailed to update the book.");
+      } finally {
+        setIsMutating(false);
       }
     },
     [booksRef],
   );
 
-  return { books, getBookById, addBook, deleteBook, updateBook };
+  return {
+    books,
+    loading,
+    isMutating,
+    error,
+    loadBooks,
+    addBook,
+    deleteBook,
+    getBookById,
+    updateBook,
+  };
 }
