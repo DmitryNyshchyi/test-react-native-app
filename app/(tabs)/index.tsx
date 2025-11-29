@@ -1,7 +1,6 @@
 import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
-import { useRouter, useFocusEffect } from "expo-router";
-import { useCallback } from "react";
+import { useRouter } from "expo-router";
 
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { ThemedText } from "@/components/themed-text";
@@ -12,13 +11,7 @@ import { useBooks } from "@/hooks/use-books";
 
 export default function HomeScreen() {
   const { push } = useRouter();
-  const { books, loadBooks, deleteBook } = useBooks();
-
-  useFocusEffect(
-    useCallback(() => {
-      void loadBooks();
-    }, [loadBooks]),
-  );
+  const { books, deleteBook } = useBooks();
 
   return (
     <View style={{ flex: 1 }}>
