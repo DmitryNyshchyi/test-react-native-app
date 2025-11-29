@@ -9,9 +9,11 @@ const BOOKS_STORAGE_KEY = "@books_list";
 export function useBooks() {
   const [books, setBooks] = useState<Book[]>([]);
 
-  const updateBooksJSON = async (updatedBooks: Book[]) => await AsyncStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(updatedBooks));
+  const updateBooksJSON = async (updatedBooks: Book[]) =>
+    await AsyncStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(updatedBooks));
 
-  const loadBooksJSON = async () => await AsyncStorage.getItem(BOOKS_STORAGE_KEY);
+  const loadBooksJSON = async () =>
+    await AsyncStorage.getItem(BOOKS_STORAGE_KEY);
 
   const getCurrentBooks = useCallback(async (): Promise<Book[]> => {
     try {
@@ -21,13 +23,13 @@ export function useBooks() {
     } catch (e) {
       Alert.alert("Error", "Failed to load books.");
 
-      return []
+      return [];
     }
-  }, [])
+  }, []);
 
   const loadBooks = async () => {
     setBooks(await getCurrentBooks());
-  }
+  };
 
   const getBookById = async (id: string): Promise<Book | null> => {
     try {
@@ -39,7 +41,7 @@ export function useBooks() {
     }
   };
 
-  const addBook = async (bookData: Omit<Book, 'id'>) => {
+  const addBook = async (bookData: Omit<Book, "id">) => {
     if (!bookData.name || !bookData.author) {
       Alert.alert("Error", "Please fill in both book name and author.");
 
@@ -47,7 +49,7 @@ export function useBooks() {
     }
 
     try {
-      const currentBooks = await getCurrentBooks()
+      const currentBooks = await getCurrentBooks();
       const newBook: Book = { ...bookData, id: Date.now().toString() };
 
       await updateBooksJSON([...currentBooks, newBook]);
@@ -63,7 +65,7 @@ export function useBooks() {
   const deleteBook = (id: string, onSuccess?: () => void) => {
     const onDelete = async () => {
       try {
-        const currentBooks = await getCurrentBooks()
+        const currentBooks = await getCurrentBooks();
         const updatedBooks = currentBooks.filter((book) => book.id !== id);
 
         await updateBooksJSON(updatedBooks);

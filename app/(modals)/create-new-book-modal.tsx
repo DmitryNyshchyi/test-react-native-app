@@ -23,9 +23,11 @@ export default function ModalScreen() {
     if (await addBook(form)) back();
   };
 
-  const updateFormField = <K extends keyof typeof form>(key: K) => (value: (typeof form)[K]) => {
-    setForm((prevForm) => ({ ...prevForm, [key]: value }));
-  };
+  const updateFormField =
+    <K extends keyof typeof form>(key: K) =>
+    (value: (typeof form)[K]) => {
+      setForm((prevForm) => ({ ...prevForm, [key]: value }));
+    };
 
   return (
     <ThemedView style={styles.container}>
@@ -47,10 +49,7 @@ export default function ModalScreen() {
         placeholderTextColor="#888"
       />
 
-      <Rating
-        rating={form.rating}
-        onRatingChange={updateFormField("rating")}
-      />
+      <Rating rating={form.rating} onRatingChange={updateFormField("rating")} />
 
       <TextInput
         value={form.description}

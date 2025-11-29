@@ -17,7 +17,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       void loadBooks();
-    }, [loadBooks])
+    }, [loadBooks]),
   );
 
   return (
@@ -78,8 +78,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerImage: {
-    height: '100%',
-    width: '100%',
+    height: "100%",
+    width: "100%",
   },
   fab: {
     position: "absolute",
