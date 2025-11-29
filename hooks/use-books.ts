@@ -91,10 +91,7 @@ export function useBooks() {
       const newBookRef = push(booksRef);
 
       await set(newBookRef, bookData);
-      Toast.show({
-        type: "success",
-        text1: "Success: Book added successfully!",
-      });
+      Toast.show({ text1: "Success: Book added successfully!" });
 
       return true;
     } catch (error) {
@@ -115,10 +112,7 @@ export function useBooks() {
         const booksRef = ref(db, "books");
 
         await remove(child(booksRef, id));
-        Toast.show({
-          type: "success",
-          text1: "Success: Book deleted successfully!",
-        });
+        Toast.show({ text1: "Success: Book deleted successfully!" });
         onSuccess?.();
       } catch (error) {
         console.error("Firebase Realtime Database error:", error);
@@ -142,10 +136,7 @@ export function useBooks() {
         const booksRef = ref(db, "books");
 
         await set(child(booksRef, bookId), updatedData);
-        Toast.show({
-          type: "success",
-          text1: "Success: Book updated successfully!",
-        });
+        Toast.show({ text1: "Success: Book updated successfully!" });
 
         return true;
       } catch (error) {
