@@ -11,7 +11,6 @@ export function useBooks() {
   const [loading, setLoading] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const booksRef = ref(db, "books");
 
   const loadBooks = useCallback(() => {
     setLoading(true);
@@ -19,122 +18,129 @@ export function useBooks() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onValue(
-      booksRef,
-      (snapshot) => {
-        setLoading(true);
-
-        const data = snapshot.val();
-        const loadedBooks: Book[] = data
-          ? Object.keys(data).map((key) => ({ id: key, ...data[key] }))
-          : [];
-
-        setBooks(loadedBooks);
-        setLoading(false);
-        setError(null);
-      },
-      (error) => {
-        console.error("Firebase Realtime Database error:", error);
-        setError("Failed to load books from the database. Please try again.");
-        setLoading(false);
-      },
-    );
-
-    return () => unsubscribe();
-  }, []);
-
-  const getBookById = useCallback(
-    async (id: string): Promise<Book | null> => {
+    try {
       setLoading(true);
 
-      try {
-        const snapshot = await get(child(booksRef, id));
+      const booksRef = ref(db, "books");
 
-        if (snapshot.exists()) {
-          return { id: snapshot.key as string, ...snapshot.val() };
-        }
+      const unsubscribe = onValue(
+        booksRef,
+        (snapshot) => {
+          const data = snapshot.val();
+          const loadedBooks: Book[] = data
+            ? Object.keys(data).map((key) => ({ id: key, ...data[key] }))
+            : [];
+          setBooks(loadedBooks);
+          setLoading(false);
+          setError(null);
+        },
+        (error) => {
+          console.error("Firebase Realtime Database error:", error);
+          setError(
+            "Failed to load books. Check your connection and database rules.",
+          );
+          setLoading(false);
+        },
+      );
 
-        return null;
-      } catch (error) {
-        console.error("Firebase Realtime Database error:", error);
-        setError("Failed to load book details.");
+      return () => unsubscribe();
+    } catch (e: any) {
+      console.error("Firebase initialization error:", e.message);
+      setError("Firebase is not configured correctly");
+      setLoading(false);
+    }
+  }, []);
 
-        return null;
-      } finally {
-        setLoading(false);
+  const getBookById = useCallback(async (id: string): Promise<Book | null> => {
+    setLoading(true);
+
+    try {
+      const booksRef = ref(db, "books");
+      const snapshot = await get(child(booksRef, id));
+
+      if (snapshot.exists()) {
+        return { id: snapshot.key as string, ...snapshot.val() };
       }
-    },
-    [booksRef],
-  );
 
-  const addBook = useCallback(
-    async (bookData: Omit<Book, "id">) => {
-      if (!bookData.name || !bookData.author) {
-        Toast.show({
-          type: "error",
-          text1: "Validation Error: Please fill in both book name and author.",
-        });
+      return null;
+    } catch (error) {
+      console.error("Firebase Realtime Database error:", error);
+      setError("Failed to load book details.");
 
-        return false;
-      }
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  const addBook = useCallback(async (bookData: Omit<Book, "id">) => {
+    if (!bookData.name || !bookData.author || !bookData.rating) {
+      Toast.show({
+        type: "error",
+        text1:
+          "Validation Error: Please fill in both book name, author and rating.",
+      });
+
+      return false;
+    }
+
+    setIsMutating(true);
+
+    try {
+      const booksRef = ref(db, "books");
+      const newBookRef = push(booksRef);
+
+      await set(newBookRef, bookData);
+      Toast.show({
+        type: "success",
+        text1: "Success: Book added successfully!",
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Firebase Realtime Database error:", error);
+      setError("Failed to save the book.");
+
+      return false;
+    } finally {
+      setIsMutating(false);
+    }
+  }, []);
+
+  const deleteBook = useCallback((id: string, onSuccess?: () => void) => {
+    const onDelete = async () => {
       setIsMutating(true);
 
       try {
-        const newBookRef = push(booksRef);
+        const booksRef = ref(db, "books");
 
-        await set(newBookRef, bookData);
+        await remove(child(booksRef, id));
         Toast.show({
           type: "success",
-          text1: "Success: Book added successfully!",
+          text1: "Success: Book deleted successfully!",
         });
-
-        return true;
-      } catch (e) {
-        console.error("Firebase Realtime Database error:", e);
-        setError("Failed to save the book.");
-
-        return false;
+        onSuccess?.();
+      } catch (error) {
+        console.error("Firebase Realtime Database error:", error);
+        setError("Failed to delete the book.");
       } finally {
         setIsMutating(false);
       }
-    },
-    [booksRef],
-  );
+    };
 
-  const deleteBook = useCallback(
-    (id: string, onSuccess?: () => void) => {
-      const onDelete = async () => {
-        setIsMutating(true);
-
-        try {
-          await remove(child(booksRef, id));
-          Toast.show({
-            type: "success",
-            text1: "Success: Book deleted successfully!",
-          });
-          onSuccess?.();
-        } catch (e) {
-          console.error("Firebase Realtime Database error:", e);
-          setError("Failed to delete the book.");
-        } finally {
-          setIsMutating(false);
-        }
-      };
-
-      Alert.alert("Delete Book", "Are you sure you want to delete this book?", [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: onDelete },
-      ]);
-    },
-    [booksRef],
-  );
+    Alert.alert("Delete Book", "Are you sure you want to delete this book?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: onDelete },
+    ]);
+  }, []);
 
   const updateBook = useCallback(
     async (bookId: string, updatedData: Partial<Omit<Book, "id">>) => {
       setIsMutating(true);
 
       try {
+        const booksRef = ref(db, "books");
+
         await set(child(booksRef, bookId), updatedData);
         Toast.show({
           type: "success",
@@ -142,14 +148,14 @@ export function useBooks() {
         });
 
         return true;
-      } catch (e) {
-        console.error("Firebase Realtime Database error:", e);
-        setError("ailed to update the book.");
+      } catch (error) {
+        console.error("Firebase Realtime Database error:", error);
+        setError("Failed to update the book.");
       } finally {
         setIsMutating(false);
       }
     },
-    [booksRef],
+    [],
   );
 
   return {
