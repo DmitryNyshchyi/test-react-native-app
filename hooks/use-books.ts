@@ -9,27 +9,29 @@ const BOOKS_STORAGE_KEY = "@books_list";
 export function useBooks() {
   const [books, setBooks] = useState<Book[]>([]);
 
-  const loadBooks = useCallback(async () => {
-    try {
-      const booksJson = await AsyncStorage.getItem(BOOKS_STORAGE_KEY);
+  const updateBooksJSON = async (updatedBooks: Book[]) => await AsyncStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(updatedBooks));
 
-      setBooks(booksJson ? JSON.parse(booksJson) : []);
+  const loadBooksJSON = async () => await AsyncStorage.getItem(BOOKS_STORAGE_KEY);
+
+  const getCurrentBooks = useCallback(async (): Promise<Book[]> => {
+    try {
+      const currentBooksJson = await loadBooksJSON();
+
+      return currentBooksJson ? JSON.parse(currentBooksJson) : [];
     } catch (e) {
       Alert.alert("Error", "Failed to load books.");
+
+      return []
     }
-  }, []);
+  }, [])
+
+  const loadBooks = async () => {
+    setBooks(await getCurrentBooks());
+  }
 
   const getBookById = async (id: string): Promise<Book | null> => {
     try {
-      const booksJson = await AsyncStorage.getItem(BOOKS_STORAGE_KEY);
-
-      if (booksJson) {
-        const allBooks: Book[] = JSON.parse(booksJson);
-
-        return allBooks.find((b) => b.id === id) || null;
-      }
-
-      return null;
+      return (await getCurrentBooks())?.find((b) => b.id === id) || null;
     } catch (e) {
       Alert.alert("Error", "Failed to load book details.");
 
@@ -45,15 +47,10 @@ export function useBooks() {
     }
 
     try {
-      const currentBooksJson = await AsyncStorage.getItem(BOOKS_STORAGE_KEY);
-      const currentBooks: Book[] = currentBooksJson
-        ? JSON.parse(currentBooksJson)
-        : [];
-
+      const currentBooks = await getCurrentBooks()
       const newBook: Book = { ...bookData, id: Date.now().toString() };
-      const updatedBooks = [...currentBooks, newBook];
 
-      await AsyncStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(updatedBooks));
+      await updateBooksJSON([...currentBooks, newBook]);
 
       return true;
     } catch (e) {
@@ -66,9 +63,10 @@ export function useBooks() {
   const deleteBook = (id: string, onSuccess?: () => void) => {
     const onDelete = async () => {
       try {
-        const updatedBooks = books.filter((book) => book.id !== id);
+        const currentBooks = await getCurrentBooks()
+        const updatedBooks = currentBooks.filter((book) => book.id !== id);
 
-        await AsyncStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(updatedBooks));
+        await updateBooksJSON(updatedBooks);
         setBooks(updatedBooks);
         onSuccess?.();
       } catch (e) {

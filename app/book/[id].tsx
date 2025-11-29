@@ -11,7 +11,7 @@ import { useBooks } from "@/hooks/use-books";
 
 export default function BookDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const {back} = useRouter();
+  const { back } = useRouter();
   const [book, setBook] = useState<Book | null>(null);
   const { getBookById, deleteBook } = useBooks();
 
