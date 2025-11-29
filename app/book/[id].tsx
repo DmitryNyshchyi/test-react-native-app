@@ -17,9 +17,7 @@ export default function BookDetailsScreen() {
 
   useEffect(() => {
     (async () => {
-      if (id) {
-        setBook(await getBookById(id));
-      }
+      if (id) setBook(await getBookById(id));
     })();
   }, [id, getBookById]);
 
