@@ -16,12 +16,11 @@ export default function BookDetailsScreen() {
   const { getBookById, deleteBook } = useBooks();
 
   useEffect(() => {
-    const loadBookDetails = async () => {
+    (async () => {
       if (id) {
         setBook(await getBookById(id));
       }
-    };
-    void loadBookDetails();
+    })();
   }, [id, getBookById]);
 
   const handleDelete = () => {
