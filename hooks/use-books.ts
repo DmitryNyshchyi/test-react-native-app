@@ -34,7 +34,8 @@ export function useBooks() {
         setError(null);
       },
       (error) => {
-        setError("Failed to load books from the database. Please try again."); // 3. Set error state
+        console.error("Firebase Realtime Database error:", error);
+        setError("Failed to load books from the database. Please try again.");
         setLoading(false);
       },
     );
